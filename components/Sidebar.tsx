@@ -1,6 +1,6 @@
 import React from 'react';
 import { Page, User, LibrarySettings } from '../types';
-import { LayoutDashboard, BookOpen, Repeat, Library, LogOut, Users, UserCircle, Layers, Settings, Sparkles } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Repeat, Sparkles, Library, LogOut, Users, UserCircle, Layers, Settings } from 'lucide-react';
 
 interface SidebarProps {
   currentPage: Page;
@@ -12,16 +12,17 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, currentUser, onLogout, settings }) => {
   const isAdmin = currentUser.role === 'admin';
-  const rolePermissions = settings.permissions?.[currentUser.role] || {};
+  const rolePermissions = settings.permissions[currentUser.role] || {};
 
   const navItems = [
     { id: Page.DASHBOARD, label: 'لوحة التحكم', icon: LayoutDashboard, visible: isAdmin },
-    // Catalog requires 'search' permission. Default to true if undefined.
+    // Catalog requires 'search' permission
     { id: Page.CATALOG, label: 'المكتبة الورقية', icon: BookOpen, visible: rolePermissions.search !== false }, 
-    // Lending requires 'borrow' permission. Default to true if undefined.
+    // Lending requires 'borrow' permission
     { id: Page.LENDING, label: isAdmin ? 'الإعارة والاسترجاع' : 'كتبي واستعاراتي', icon: Repeat, visible: rolePermissions.borrow !== false },
     { id: Page.SPECIALIZATIONS, label: 'إدارة التخصصات', icon: Layers, visible: isAdmin },
     { id: Page.USERS, label: 'المستخدمين', icon: Users, visible: isAdmin },
+    // AI Assistant requires 'digital' permission
     { id: Page.AI_ASSISTANT, label: 'المساعد الذكي', icon: Sparkles, visible: rolePermissions.digital !== false },
     { id: Page.SETTINGS, label: 'إعدادات النظام', icon: Settings, visible: isAdmin },
   ];

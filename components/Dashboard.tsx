@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Book, Loan, User, LibrarySettings, DashboardStats } from '../types';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
-import { Users, Bell, BookA, GraduationCap, Globe, Library, Repeat, AlertTriangle, LogIn, CheckCircle, ArrowRightLeft } from 'lucide-react';
+import { Users, Bell, BookA, GraduationCap, Globe, Library, Repeat, AlertTriangle, Clock, LogIn, Plus, CheckCircle, ArrowRightLeft } from 'lucide-react';
 
 interface DashboardProps {
   books: Book[];
@@ -21,7 +21,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ books, loans, users, notif
 
   // --- Calculation Logic (Auto Mode) ---
   const calculatedStats: DashboardStats = {
-      students: users.filter(u => u.role === 'student').length,
+      students: new Set(loans.map(l => l.userId)).size, // Beneficiary Students roughly or total students? Let's use total students for consistency with labels
       books: books.length,
       journals: books.filter(b => 
         b.specialization.includes('دوريات') || 
@@ -29,18 +29,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ books, loans, users, notif
         b.title.includes('مجلة') ||
         b.department.includes('دوريات')
       ).length,
-      professors: users.filter(u => u.role === 'professor' || u.role === 'staff').length,
+      professors: users.filter(u => u.role === 'professor' || u.role === 'staff').length, // Grouping staff/professors
       borrowed: loans.filter(l => l.status === 'active' || l.status === 'overdue').length,
       available: books.reduce((sum, b) => sum + b.remainingCopies, 0)
   };
 
-  // Determine which stats to use (Auto vs Manual)
-  // We use a fallback to calculatedStats if manualStats values are missing to prevent crashes
-  const statsToDisplay: DashboardStats = settings.dashboardMode === 'manual' && settings.manualStats 
-      ? { ...calculatedStats, ...settings.manualStats } 
-      : calculatedStats;
+  // Adjust students count to be total users with student role for better accuracy in auto mode
+  calculatedStats.students = users.filter(u => u.role === 'student').length;
 
-  // --- Extra Stats (Calculated regardless of mode for the secondary section)
+  // Determine which stats to use
+  const statsToDisplay = settings.dashboardMode === 'manual' ? settings.manualStats : calculatedStats;
+
+  // --- Dictionaries (Extra stat not in DashboardStats interface but kept for visuals if needed, using calculated)
   const dictionariesCount = books.filter(b => 
     b.specialization.includes('قواميس') || 
     b.specialization.includes('معاجم') || 
@@ -65,14 +65,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ books, loans, users, notif
       available: { label: 'المتاح', icon: CheckCircle, color: 'bg-gradient-to-br from-teal-500 to-teal-700', sub: 'نسخ متوفرة', border: 'border-t-teal-500' },
   };
 
-  // Filter visible stats based on settings
-  const visibleStatsKeys = (Object.keys(statConfig) as Array<keyof typeof statConfig>).filter(key => settings.visibleStats[key]);
+  // Filter visible stats
+  const visibleStatsList = (Object.keys(statConfig) as Array<keyof typeof statConfig>).filter(key => settings.visibleStats[key]);
 
   // Quick Stats (Section 1 - Dynamic)
-  const quickStats = visibleStatsKeys.map(key => ({
+  const quickStats = visibleStatsList.map(key => ({
       ...statConfig[key],
       value: statsToDisplay[key]
   }));
+
+  // Extra fixed stats (Section 2 - Keeping these as fixed extras or could be dynamic too)
+  const additionalStats = [
+    { label: 'الزيارات', value: totalVisits, icon: LogIn, color: 'bg-gradient-to-br from-cyan-500 to-cyan-700', sub: 'عملية دخول', border: 'border-t-cyan-500' },
+    { label: 'متأخرة', value: overdueCount, icon: AlertTriangle, color: 'bg-gradient-to-br from-[#F44336] to-[#C62828]', sub: 'كتب', border: 'border-t-[#F44336]' },
+    { label: 'المستخدمين', value: totalUsers, icon: Users, color: 'bg-gradient-to-br from-indigo-500 to-indigo-700', sub: 'حساب مسجل', border: 'border-t-indigo-500' },
+    { label: 'القواميس', value: dictionariesCount, icon: BookA, color: 'bg-gradient-to-br from-lime-500 to-lime-700', sub: 'قاموس ومعجم', border: 'border-t-lime-500' },
+  ];
 
   // Prepare Chart Data
   const specData = specializations.map(spec => ({
@@ -103,7 +111,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ books, loans, users, notif
       {/* Header */}
       <header className="bg-gradient-to-br from-[#4A90E2] to-[#2C6FB7] text-white p-8 rounded-2xl shadow-lg shadow-blue-500/20 text-center mb-8">
         <div className="flex justify-center mb-4">
-            {settings.logo && <img src={settings.logo} alt="Logo" className="h-20 bg-white/10 rounded-lg p-2 backdrop-blur-sm object-contain" />}
+            {settings.logo && <img src={settings.logo} alt="Logo" className="h-20 bg-white/10 rounded-lg p-2 backdrop-blur-sm" />}
         </div>
         <h1 className="text-3xl font-bold mb-2">📊 {settings.name || 'لوحة تحكم نظام إدارة المكتبة'}</h1>
         <p className="opacity-90 text-blue-100">{settings.institution}</p>
@@ -148,49 +156,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ books, loans, users, notif
 
       {/* Section 2: Additional Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border-t-4 border-t-cyan-500 hover:-translate-y-1 transition-transform duration-300 flex items-center gap-4">
-          <div className="bg-gradient-to-br from-cyan-500 to-cyan-700 w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-lg shrink-0">
-            <LogIn className="w-8 h-8" />
-          </div>
-          <div>
-            <h3 className="text-3xl font-bold text-slate-800">{totalVisits.toLocaleString()}</h3>
-            <p className="text-slate-500 font-medium">الزيارات</p>
-            <p className="text-xs text-slate-400 mt-1">عملية دخول</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl shadow-sm border-t-4 border-t-[#F44336] hover:-translate-y-1 transition-transform duration-300 flex items-center gap-4">
-          <div className="bg-gradient-to-br from-[#F44336] to-[#C62828] w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-lg shrink-0">
-            <AlertTriangle className="w-8 h-8" />
-          </div>
-          <div>
-            <h3 className="text-3xl font-bold text-slate-800">{overdueCount.toLocaleString()}</h3>
-            <p className="text-slate-500 font-medium">متأخرة</p>
-            <p className="text-xs text-slate-400 mt-1">كتب</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl shadow-sm border-t-4 border-t-indigo-500 hover:-translate-y-1 transition-transform duration-300 flex items-center gap-4">
-          <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-lg shrink-0">
-            <Users className="w-8 h-8" />
-          </div>
-          <div>
-            <h3 className="text-3xl font-bold text-slate-800">{totalUsers.toLocaleString()}</h3>
-            <p className="text-slate-500 font-medium">المستخدمين</p>
-            <p className="text-xs text-slate-400 mt-1">حساب مسجل</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl shadow-sm border-t-4 border-t-lime-500 hover:-translate-y-1 transition-transform duration-300 flex items-center gap-4">
-          <div className="bg-gradient-to-br from-lime-500 to-lime-700 w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-lg shrink-0">
-            <BookA className="w-8 h-8" />
-          </div>
-          <div>
-            <h3 className="text-3xl font-bold text-slate-800">{dictionariesCount.toLocaleString()}</h3>
-            <p className="text-slate-500 font-medium">القواميس</p>
-            <p className="text-xs text-slate-400 mt-1">قاموس ومعجم</p>
-          </div>
-        </div>
+        {additionalStats.map((stat, idx) => {
+          const Icon = stat.icon;
+          return (
+            <div key={idx} className={`bg-white p-6 rounded-2xl shadow-sm border-t-4 ${stat.border} hover:-translate-y-1 transition-transform duration-300 flex items-center gap-4`}>
+              <div className={`${stat.color} w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-lg shrink-0`}>
+                <Icon className="w-8 h-8" />
+              </div>
+              <div>
+                <h3 className="text-3xl font-bold text-slate-800">{stat.value.toLocaleString()}</h3>
+                <p className="text-slate-500 font-medium">{stat.label}</p>
+                <p className="text-xs text-slate-400 mt-1">{stat.sub}</p>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Section 3: Charts */}
