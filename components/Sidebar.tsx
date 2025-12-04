@@ -1,6 +1,6 @@
 import React from 'react';
 import { Page, User, LibrarySettings } from '../types';
-import { LayoutDashboard, BookOpen, Repeat, Library, LogOut, Users, UserCircle, Layers, Settings } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Repeat, Library, LogOut, Users, UserCircle, Layers, Settings, Sparkles } from 'lucide-react';
 
 interface SidebarProps {
   currentPage: Page;
@@ -22,6 +22,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, curre
     { id: Page.LENDING, label: isAdmin ? 'الإعارة والاسترجاع' : 'كتبي واستعاراتي', icon: Repeat, visible: rolePermissions.borrow !== false },
     { id: Page.SPECIALIZATIONS, label: 'إدارة التخصصات', icon: Layers, visible: isAdmin },
     { id: Page.USERS, label: 'المستخدمين', icon: Users, visible: isAdmin },
+    { id: Page.AI_ASSISTANT, label: 'المساعد الذكي', icon: Sparkles, visible: rolePermissions.digital !== false },
     { id: Page.SETTINGS, label: 'إعدادات النظام', icon: Settings, visible: isAdmin },
   ];
 
