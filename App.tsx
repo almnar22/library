@@ -3,7 +3,6 @@ import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
 import { Catalog } from './components/Catalog';
 import { Lending } from './components/Lending';
-import { Assistant } from './components/Assistant';
 import { Login } from './components/Login';
 import { UserManagement } from './components/UserManagement';
 import { Specializations } from './components/Specializations';
@@ -407,8 +406,6 @@ const App: React.FC = () => {
             onUpdateUser={handleUpdateUser}
             onDeleteUser={handleDeleteUser}
         />
-      case Page.AI_ASSISTANT:
-        return <Assistant books={books} />;
       case Page.SETTINGS:
         return <Settings 
             settings={settings}

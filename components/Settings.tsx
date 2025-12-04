@@ -326,23 +326,6 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onUpdateSettings, 
                                 </label>
                             </div>
                         </div>
-
-                        <div>
-                            <h4 className="flex items-center gap-2 font-bold text-slate-700 mb-4 border-b pb-2">
-                                <Monitor className="w-4 h-4 text-slate-400" /> المكتبة الرقمية
-                            </h4>
-                            <div className="space-y-3">
-                                <label className="flex items-center gap-2 cursor-pointer select-none">
-                                    <input 
-                                        type="checkbox" 
-                                        checked={localSettings.permissions[activeRoleTab]?.digital ?? true}
-                                        onChange={(e) => updateNested(`permissions.${activeRoleTab}.digital`, e.target.checked)}
-                                        className="w-4 h-4 rounded text-[#9b59b6] focus:ring-[#9b59b6]" 
-                                    />
-                                    <span className="text-sm font-medium text-slate-700">الوصول للمساعد الذكي</span>
-                                </label>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
